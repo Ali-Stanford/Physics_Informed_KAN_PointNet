@@ -519,10 +519,6 @@ def computeRelativeL2OnSurface(X,Tp,index):
 ##################################
 
 def compute_T_surface(X,Tp,index):
-    
-    #Tp = np.zeros(num_points,dtype=float)
-    #for i in range(num_points):
-    #    Tp[i] = Y[index][i] # Tp = prediction[index,:,3]
 
     Nu_con = 0
     for i in range(N_boundary):
