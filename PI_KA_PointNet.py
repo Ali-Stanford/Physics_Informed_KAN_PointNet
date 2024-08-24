@@ -36,7 +36,7 @@ outter_surface_n = 492 # number of points on the outter surface
 
 SCALE = 1.0
 Learning_rate = 0.0005 #0.001
-Epoch = 10000
+Epoch = 2 #10000
 Nb = 1 #batch size, works for: 2, 5, 10
 J_Loss = 0.0050
 
@@ -235,7 +235,7 @@ class PointNetKAN(nn.Module):
 
 ###################################################
 
-def plotSolutions2DPoint(x,y,variable,index,name):    
+def plotSolutions2DPoint(x,y,variable,index,name,title):    
     marker_size= 1.0 
     plt.scatter(x, y, marker_size, variable, cmap='jet')
     cbar= plt.colorbar()
@@ -243,8 +243,10 @@ def plotSolutions2DPoint(x,y,variable,index,name):
     plt.locator_params(axis="y", nbins=6)
     plt.xlabel('x (m)')
     plt.ylabel('y (m)')
+    plt.title(title)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(name+'.png',dpi=300)
+    plt.savefig(name + '.pdf')
     #plt.savefig(name+'.eps')    
     plt.clf()
     #plt.show()
@@ -822,19 +824,19 @@ def build_model_Thermal():
     prediction = prediction.cpu().numpy()
 
     for index in range(data):
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],CFD_train[index,:,0],index,'u truth '+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],prediction[index,0,:],index,'u prediction '+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],CFD_train[index,:,1],index,'v truth '+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],prediction[index,1,:],index,'v prediction '+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],CFD_train[index,:,2],index,'p truth '+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],prediction[index,2,:],index,'p prediction '+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],CFD_train[index,:,3],index,'T truth '+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],prediction[index,3,:],index,'T prediction '+str(index))
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],CFD_train[index,:,0],index,'u truth '+str(index),r'Ground truth of velocity $u$ (m/s)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],prediction[index,0,:],index,'u prediction '+str(index),r'Prediction of velocity $u$ (m/s)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],CFD_train[index,:,1],index,'v truth '+str(index),r'Ground truth of velocity $v$ (m/s)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],prediction[index,1,:],index,'v prediction '+str(index),r'Prediction of velocity $v$ (m/s)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],CFD_train[index,:,2],index,'p truth '+str(index),r'Ground truth of pressure $p$ (Pa)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],prediction[index,2,:],index,'p prediction '+str(index),r'Prediction of pressure $p$ (Pa)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],CFD_train[index,:,3],index,'T truth '+str(index),r'Ground truth of temperature $T$ (K)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],prediction[index,3,:],index,'T prediction '+str(index),r'Prediction of temperature $T$ (K)')
             
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],np.abs(CFD_train[index,:,0]-prediction[index,0,:]),index,'abs error u'+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],np.abs(CFD_train[index,:,1]-prediction[index,1,:]),index,'abs error v'+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],np.abs(CFD_train[index,:,2]-prediction[index,2,:]),index,'abs error p'+str(index))
-        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],np.abs(CFD_train[index,:,3]-prediction[index,3,:]),index,'abs error T'+str(index))
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],np.abs(CFD_train[index,:,0]-prediction[index,0,:]),index,'abs error u'+str(index),r'Absolute error of velocity $u$ (m/s)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],np.abs(CFD_train[index,:,1]-prediction[index,1,:]),index,'abs error v'+str(index),r'Absolute error of velocity $v$ (m/s)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],np.abs(CFD_train[index,:,2]-prediction[index,2,:]),index,'abs error p'+str(index),r'Absolute error of pressure $p$ (Pa)')
+        plotSolutions2DPoint(X_train[index,:,0],X_train[index,:,1],np.abs(CFD_train[index,:,3]-prediction[index,3,:]),index,'abs error T'+str(index),r'Absolute error of temperature $T$ (K)')
 
     #Error Analysis
     error_u_rel = [] 
@@ -949,28 +951,28 @@ def build_model_Thermal():
     ############################
 
     j = error_u_rel.index(max(error_u_rel))
-    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,0]-prediction[j,0,:]),j,'max error rel u'+str(j))
+    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,0]-prediction[j,0,:]),j,'max error rel u'+str(j),r'Absolute error of velocity $u$ (m/s)')
 
     j = error_u_rel.index(min(error_u_rel))
-    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,0]-prediction[j,0,:]),j,'min error rel u'+str(j))
+    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,0]-prediction[j,0,:]),j,'min error rel u'+str(j),r'Absolute error of velocity $u$ (m/s)')
         
     j = error_v_rel.index(max(error_v_rel))
-    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,1]-prediction[j,1,:]),j,'max error rel v'+str(j))
+    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,1]-prediction[j,1,:]),j,'max error rel v'+str(j),r'Absolute error of velocity $v$ (m/s)')
         
     j = error_v_rel.index(min(error_v_rel))
-    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,1]-prediction[j,1,:]),j,'min error rel v'+str(j))
+    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,1]-prediction[j,1,:]),j,'min error rel v'+str(j),r'Absolute error of velocity $v$ (m/s)')
         
     j = error_p_rel.index(max(error_p_rel))
-    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,2]-prediction[j,2,:]),j,'max error rel p'+str(j))
+    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,2]-prediction[j,2,:]),j,'max error rel p'+str(j),r'Absolute error of pressure $p$ (Pa)')
         
     j = error_p_rel.index(min(error_p_rel))
-    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,2]-prediction[j,2,:]),j,'min error rel p'+str(j))
+    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,2]-prediction[j,2,:]),j,'min error rel p'+str(j),r'Absolute error of pressure $p$ (Pa)')
         
     j = error_T_rel.index(max(error_T_rel))
-    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,3]-prediction[j,3,:]),j,'max error rel T'+str(j))
+    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,3]-prediction[j,3,:]),j,'max error rel T'+str(j),r'Absolute error of temperature $T$ (K)')
         
     j = error_T_rel.index(min(error_T_rel))
-    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,3]-prediction[j,3,:]),j,'min error rel T'+str(j))
+    plotSolutions2DPoint(X_train[j,:,0],X_train[j,:,1],np.abs(CFD_train[j,:,3]-prediction[j,3,:]),j,'min error rel T'+str(j),r'Absolute error of temperature $T$ (K)')
         
     ##################################
     for index in range(data):   
@@ -979,4 +981,3 @@ def build_model_Thermal():
 #########################################################
 
 build_model_Thermal()
-
