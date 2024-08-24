@@ -21,7 +21,6 @@ import torch.nn.init as init
 import time
 
 ###############
-#print(torch.cuda.is_available())
 
 if torch.cuda.is_available():
     device = torch.device("cuda")  # GPU available
