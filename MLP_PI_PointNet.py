@@ -486,41 +486,6 @@ def problemSet_nonuniform_grid():
 
 ##################################
 
-def compute_T_surface(X,Y,index,name):
-    
-    Tp = np.zeros(num_points,dtype=float)
-    for i in range(num_points):
-        Tp[i] = Y[index][i] 
-
-    Nu_con = 0
-    for i in range(N_boundary):
-        if np.sqrt(np.square(0.0*np.pi-X[index][i][0]) + np.square(0.0*np.pi-X[index][i][1])) > (0.8):
-            Nu_con += 1
-    
-    Nu_con = N_boundary - Nu_con
-    Nu_surface = np.random.normal(size=(Nu_con, 4)) #x,y,T,alpha
-    Nu_con = 0
-
-    for i in range(N_boundary):
-        if np.sqrt(np.square(0.0*np.pi-X[index][i][0]) + np.square(0.0*np.pi-X[index][i][1])) > (0.8):
-            continue
-            
-        Nu_surface[Nu_con][0] = X[index][i][0]
-        Nu_surface[Nu_con][1] = X[index][i][1]
-        Nu_surface[Nu_con][2] = Tp[i]
-        Nu_surface[Nu_con][3] = np.arctan2(Nu_surface[Nu_con][1]-0.0, Nu_surface[Nu_con][0]-0.0)
-        Nu_con += 1
-
-    Nu_surface = Nu_surface[np.argsort(Nu_surface[:, 3])]
-    
-    information = open("Temperature"+str(index+1)+name+".txt", "w")
-    for i in range(Nu_con-1):        
-        information.write(str(Nu_surface[i][3])+'  '+str(Nu_surface[i][2]))
-        information.write('\n')
-    information.close()
-
-##################################
-
 def computeRelativeL2OnSurface(X,Tp,index):
 
     T_truth = 1.0
