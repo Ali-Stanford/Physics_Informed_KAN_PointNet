@@ -23,9 +23,9 @@ import gc
 ###############
 
 if torch.cuda.is_available():
-    device = torch.device("cuda")  # GPU available
+    device = torch.device("cuda")  
 else:
-    device = torch.device("cpu")  # Only CPU available
+    device = torch.device("cpu") 
 
 ###############
 
