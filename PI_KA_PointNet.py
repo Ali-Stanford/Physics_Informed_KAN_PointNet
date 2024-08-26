@@ -65,8 +65,7 @@ interior_list = [] #interior nodes without full, BC, sparse
 
 ###############
 
-Data = np.load('/scratch/users/kashefi/Model10/ZYkanpipn1/Data.npy')
-#Data = Data[:134, :, :]
+Data = np.load('Data.npy')
 
 data, num_points, _ = Data.shape
 
@@ -664,12 +663,6 @@ def TheLoss(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperature_p,pose
     p_sparse = p[pose_sparse_p]
     T_sparse = T[pose_sparse_p]
 
-    del u, v, p, T
-    gc.collect()
-    torch.cuda.empty_cache()
-
-    #DYDX = torch.autograd.grad(Y, X, grad_outputs=torch.ones_like(Y), create_graph=True)[0]
-
     du = torch.autograd.grad(Y[:, 0, :], X, grad_outputs=torch.ones_like(Y[:, 0, :]), create_graph=True)[0]
     dv = torch.autograd.grad(Y[:, 1, :], X, grad_outputs=torch.ones_like(Y[:, 1, :]), create_graph=True)[0]
     dp = torch.autograd.grad(Y[:, 2, :], X, grad_outputs=torch.ones_like(Y[:, 2, :]), create_graph=True)[0]
@@ -683,10 +676,6 @@ def TheLoss(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperature_p,pose
     dp_dy = dp[:, 1, :]
     dT_dx = dT[:, 0, :]
     dT_dy = dT[:, 1, :]
-
-    del dp
-    gc.collect()
-    torch.cuda.empty_cache()
 
     du_dx = du_dx.contiguous().view(-1)
     du_dy = du_dy.contiguous().view(-1)
@@ -705,31 +694,13 @@ def TheLoss(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperature_p,pose
     dp_dy_in = dp_dy[pose_interior_p]
     dT_dx_in = dT_dx[pose_interior_p]
     dT_dy_in = dT_dy[pose_interior_p]
-
-    del du_dx, du_dy, dv_dx, dv_dy, dp_dx, dp_dy, dT_dx, dT_dy
-    gc.collect()
-    torch.cuda.empty_cache()
-
+    
     d2u_x = torch.autograd.grad(du[:, 0, :], X, grad_outputs=torch.ones_like(du[:, 0, :]), create_graph=True)[0]
     d2u_y = torch.autograd.grad(du[:, 1, :], X, grad_outputs=torch.ones_like(du[:, 1, :]), create_graph=True)[0]    
-    
-    del du
-    gc.collect()
-    torch.cuda.empty_cache()
-
     d2v_x = torch.autograd.grad(dv[:, 0, :], X, grad_outputs=torch.ones_like(dv[:, 0, :]), create_graph=True)[0]
     d2v_y = torch.autograd.grad(dv[:, 1, :], X, grad_outputs=torch.ones_like(dv[:, 1, :]), create_graph=True)[0]
-
-    del dv
-    gc.collect()
-    torch.cuda.empty_cache()
-
     d2T_x = torch.autograd.grad(dT[:, 0, :], X, grad_outputs=torch.ones_like(dT[:, 0, :]), create_graph=True)[0]
     d2T_y = torch.autograd.grad(dT[:, 1, :], X, grad_outputs=torch.ones_like(dT[:, 1, :]), create_graph=True)[0]
-
-    del dT
-    gc.collect()
-    torch.cuda.empty_cache()
 
     d2u_dx2 = d2u_x[:, 0, :]
     d2u_dy2 = d2u_y[:, 1, :]
@@ -737,10 +708,6 @@ def TheLoss(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperature_p,pose
     d2v_dy2 = d2v_y[:, 1, :]
     d2T_dx2 = d2T_x[:, 0, :]
     d2T_dy2 = d2T_y[:, 1, :]
-
-    del d2u_x, d2u_y, d2v_x, d2v_y, d2T_x, d2T_y
-    gc.collect()
-    torch.cuda.empty_cache()
 
     d2u_dx2 = d2u_dx2.contiguous().view(-1)
     d2u_dy2 = d2u_dy2.contiguous().view(-1)
@@ -756,10 +723,6 @@ def TheLoss(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperature_p,pose
     d2T_dx2_in = d2T_dx2[pose_interior_p]
     d2T_dy2_in = d2T_dy2[pose_interior_p]
 
-    del d2u_dx2, d2u_dy2, d2v_dx2, d2v_dy2, d2T_dx2, d2T_dy2
-    gc.collect()
-    torch.cuda.empty_cache()
-
     boundary_u_truth = torch.tensor(cfd_u[pose_BC.cpu()], dtype=torch.float32, device=Y.device)
     boundary_v_truth = torch.tensor(cfd_v[pose_BC.cpu()], dtype=torch.float32, device=Y.device)
 
@@ -774,12 +737,7 @@ def TheLoss(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperature_p,pose
     r4 = density*(u_in*dT_dx_in + v_in*dT_dy_in) - (kappa/1.0)*(d2T_dx2_in + d2T_dy2_in)
    
     PDE_cost = torch.mean(r1**2 + r2**2 + r3**2 + r4**2)
-
-    del r1, r2, r3, r4
-    torch.cuda.empty_cache()
-
     BC_cost = torch.mean((u_boundary - 0.0)**2 + (v_boundary - 0.0)**2) + torch.mean((T_boundary - 0.0)**2)
-    
     Sparse_cost = torch.mean((u_sparse - sparse_u_truth)**2 + (v_sparse - sparse_v_truth)**2 + (p_sparse - sparse_p_truth)**2 + (T_sparse - sparse_T_truth)**2)
     
     return PDE_cost + Sparse_cost + BC_cost
