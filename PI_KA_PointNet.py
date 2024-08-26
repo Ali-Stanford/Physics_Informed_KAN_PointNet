@@ -42,7 +42,7 @@ outter_surface_n = 492 # number of points on the outter surface
 SCALE = 1.0
 Learning_rate = 0.0005 #0.001
 Epoch = 1000 
-Nb = 7 # works unitl 7 (memory sensetiv)
+Nb = 7 # batch size, it works until 7 with memory of 80GB (memory sensitive)
 J_Loss = 0.0350
 
 ###############
