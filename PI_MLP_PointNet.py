@@ -23,9 +23,9 @@ import time
 ###############
 
 if torch.cuda.is_available():
-    device = torch.device("cuda")  # GPU available
+    device = torch.device("cuda")  
 else:
-    device = torch.device("cpu")  # Only CPU available
+    device = torch.device("cpu") 
 
 ###############
 
@@ -34,11 +34,13 @@ variable_number = 4  # (u,v,p,T)
 N_boundary = 168+492 # number of points on the boundary
 outter_surface_n = 492 # number of points on the outter surface
 
+###############
+
 SCALE = 1.0
 Learning_rate = 0.001 #0.0005
-Epoch = 3
-Nb = 1 #batch size, works for: 2, 5, 10
-J_Loss = 0.050
+Epoch = 3000
+Nb = 5 #batch size (memory sensitive)
+J_Loss = 0.035
 
 ###############
 
@@ -54,8 +56,7 @@ interior_list = [] #interior nodes without full, BC, sparse
 
 ###############
 
-Data = np.load('/scratch/users/kashefi/Model10/ZYkanpipn1/Data.npy')
-Data = Data[:1, :, :]
+Data = np.load('Data.npy')
 
 data, num_points, _ = Data.shape
 
@@ -386,41 +387,6 @@ def problemSet_nonuniform_grid():
 
 ##################################
 
-def compute_T_surface(X,Y,index,name):
-    
-    Tp = np.zeros(num_points,dtype=float)
-    for i in range(num_points):
-        Tp[i] = Y[index][i] 
-
-    Nu_con = 0
-    for i in range(N_boundary):
-        if np.sqrt(np.square(0.0*np.pi-X[index][i][0]) + np.square(0.0*np.pi-X[index][i][1])) > (0.8):
-            Nu_con += 1
-    
-    Nu_con = N_boundary - Nu_con
-    Nu_surface = np.random.normal(size=(Nu_con, 4)) #x,y,T,alpha
-    Nu_con = 0
-
-    for i in range(N_boundary):
-        if np.sqrt(np.square(0.0*np.pi-X[index][i][0]) + np.square(0.0*np.pi-X[index][i][1])) > (0.8):
-            continue
-            
-        Nu_surface[Nu_con][0] = X[index][i][0]
-        Nu_surface[Nu_con][1] = X[index][i][1]
-        Nu_surface[Nu_con][2] = Tp[i]
-        Nu_surface[Nu_con][3] = np.arctan2(Nu_surface[Nu_con][1]-0.0, Nu_surface[Nu_con][0]-0.0)
-        Nu_con += 1
-
-    Nu_surface = Nu_surface[np.argsort(Nu_surface[:, 3])]
-    
-    information = open("Temperature"+str(index+1)+name+".txt", "w")
-    for i in range(Nu_con-1):        
-        information.write(str(Nu_surface[i][3])+'  '+str(Nu_surface[i][2]))
-        information.write('\n')
-    information.close()
-
-##################################
-
 def computeRelativeL2OnSurface(X,Tp,index):
 
     T_truth = 1.0
@@ -612,7 +578,7 @@ def build_model_Thermal():
     LOSS_Total = []
     converge_iteration = 0
     
-    optimizer = optim.Adam(model.parameters(), lr=Learning_rate) #set epsilon?!
+    optimizer = optim.Adam(model.parameters(), lr=Learning_rate)
     
     start_ite = time.time()
 
@@ -656,29 +622,28 @@ def build_model_Thermal():
             group_interior_p = np.zeros(int(len(pointer)*len(interior_list)), dtype=int)
 
             catch = 0
-            for ii in range(Nb):
+            for ii in range(len(pointer)):
                 for jj in range(len(BC_list)):
                     group_BC_p[catch] = int(ii*num_points + jj)
                     catch += 1
 
             catch = 0
-            for ii in range(Nb):
+            for ii in range(len(pointer)):
                 for jj in range(outter_surface_n):
                     group_BC_temperature_p[catch] = BC_list_temperature_inverse[pointer[ii]][jj] + ii*num_points
                     catch += 1
 
             catch = 0
-            for ii in range(Nb):
+            for ii in range(len(pointer)):
                 for jj in range(sparse_n):
                     group_sparse_p[catch] = sparse_list[pointer[ii]][jj] + ii*num_points
                     catch += 1
 
             catch = 0
-            for ii in range(Nb):
+            for ii in range(len(pointer)):
                 for jj in range(len(interior_list)):
                     group_interior_p[catch] = int(ii*num_points + len(BC_list) + jj)
                     catch += 1
-
 
             X_train_mini = np.take(X_train, pointer[:], axis=0)
             X_train_mini = X_train_mini.transpose(0, 2, 1)
