@@ -40,7 +40,7 @@ SCALE = 1.0
 Learning_rate = 0.001 #0.0005
 Epoch = 3000
 Nb = 5 #batch size (memory sensitive)
-J_Loss = 0.035
+J_Loss = 0.0005
 
 ###############
 
@@ -476,7 +476,7 @@ def TheLoss(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperature_p,pose
 
     u_boundary = u[pose_BC_p]
     v_boundary = v[pose_BC_p]
-    T_boundary = T[pose_BC_p]
+    T_boundary = T[pose_BC_temperature_p]
 
     u_sparse = u[pose_sparse_p]
     v_sparse = v[pose_sparse_p]
