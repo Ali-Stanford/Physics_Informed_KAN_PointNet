@@ -43,7 +43,7 @@ SCALE = 1.0
 Learning_rate = 0.0005 #0.001
 Epoch = 1000 
 Nb = 7 # batch size, it works until 7 with memory of 80GB (memory sensitive)
-J_Loss = 0.0350
+J_Loss = 0.0005
 
 ###############
 
@@ -575,7 +575,7 @@ def TheLossEfficient(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperatu
 
     u_boundary = Y[:, 0, :].contiguous().view(-1)[pose_BC_p]
     v_boundary = Y[:, 1, :].contiguous().view(-1)[pose_BC_p]
-    T_boundary = Y[:, 3, :].contiguous().view(-1)[pose_BC_p]
+    T_boundary = Y[:, 3, :].contiguous().view(-1)[pose_BC_temperature_p]
 
     u_sparse = Y[:, 0, :].contiguous().view(-1)[pose_sparse_p]
     v_sparse = Y[:, 1, :].contiguous().view(-1)[pose_sparse_p]
@@ -656,7 +656,7 @@ def TheLoss(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperature_p,pose
 
     u_boundary = u[pose_BC_p]
     v_boundary = v[pose_BC_p]
-    T_boundary = T[pose_BC_p]
+    T_boundary = T[pose_BC_temperature_p]
 
     u_sparse = u[pose_sparse_p]
     v_sparse = v[pose_sparse_p]
