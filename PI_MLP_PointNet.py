@@ -114,7 +114,6 @@ class PointNet(nn.Module):
         x = F.tanh(self.conv4(x))
         x = F.tanh(self.conv5(x))
 
-
         # Max pooling to get the global feature
         global_feature = F.max_pool1d(x, kernel_size=x.size(-1))
         global_feature = global_feature.expand(-1, -1, num_points)
