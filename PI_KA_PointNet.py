@@ -53,9 +53,9 @@ kappa =  np.power(2.0,1.5)*np.power(10.0,-2.5)
 
 ###############
 
-poly_degree = 3
-ALPHA = 1.0
-BETA = 1.0
+poly_degree = 4
+ALPHA = 0.5
+BETA = 0.5
 
 ###############
 
