@@ -213,11 +213,8 @@ class PointNetKAN(nn.Module):
         x = self.bn5(x)
 
         # Max pooling to get the global feature
-        global_feature = F.max_pool1d(x, kernel_size=num_points)
+        global_feature = F.max_pool1d(x, kernel_size=x.size(-1))
         global_feature = global_feature.view(-1, global_feature.size(1), 1).expand(-1, -1, num_points)
-
-        #global_feature = F.max_pool1d(x, kernel_size=x.size(-1))
-        #global_feature = global_feature.expand(-1, -1, num_points)
 
         # Concatenate local and global features
         x = torch.cat([local_feature, global_feature], dim=1)
