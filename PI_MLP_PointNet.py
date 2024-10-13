@@ -76,7 +76,6 @@ sparse_list = [[-1 for i in range(sparse_n)] for j in range(data)]
 BC_list_temperature_inverse = [[-1 for i in range(outter_surface_n)] for j in range(data)] 
 
 ############################ Define PointNet with MLP ##############################
-
 class PointNet(nn.Module):
     def __init__(self, input_channels, output_channels, scaling=1.0):
         super(PointNet, self).__init__()
@@ -100,7 +99,6 @@ class PointNet(nn.Module):
         #self.bn9 = nn.BatchNorm1d(int(128 * scaling))
         self.conv10 = nn.Conv1d(int(128 * scaling), output_channels, 1)
 
-    
     def forward(self, x):
 
         # Shared MLP (64, 64)
@@ -116,7 +114,7 @@ class PointNet(nn.Module):
 
         # Max pooling to get the global feature
         global_feature = F.max_pool1d(x, kernel_size=x.size(-1))
-        global_feature = global_feature.expand(-1, -1, num_points)
+        global_feature = global_feature.view(-1, global_feature.size(1), 1).expand(-1, -1, num_points)
 
         # Concatenate local and global features
         x = torch.cat([local_feature, global_feature], dim=1)
