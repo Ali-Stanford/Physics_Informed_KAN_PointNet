@@ -1,1 +1,1 @@
-# PI-KA-PointNet
+# Physics-informed KAN PointNet
