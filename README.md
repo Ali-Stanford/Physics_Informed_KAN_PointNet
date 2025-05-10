@@ -65,7 +65,7 @@ pip3 install numpy matplotlib torchsummary
 Use the following batch command to download the dataset (a NumPy array, approximately 42MB in size).
 
 ```bash
-wget https://web.stanford.edu/~kashefi/data/CFDdata.npy
+wget https://web.stanford.edu/~kashefi/data/HeatTransferData.npy
 ```
 
 **Questions?** <br>
