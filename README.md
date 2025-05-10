@@ -7,20 +7,18 @@
 **Citation** <br>
 If you use the code, please cite the following article: <br>
 
-**[Kolmogorov-Arnold PointNet: Deep learning for prediction of fluid fields on irregular geometries](https://doi.org/10.1016/j.cma.2025.117888)**
+**[Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular geometries](https://arxiv.org/abs/2504.06327)**
 
-    @article{kashefi2024KANpointnetCFD,
-      title = {Kolmogorov–Arnold PointNet: Deep learning for prediction of fluid fields on irregular geometries},
-      journal = {Computer Methods in Applied Mechanics and Engineering},
-      volume = {439},
-      pages = {117888},
-      year = {2025},
-      doi = {https://doi.org/10.1016/j.cma.2025.117888},
-      author = {Ali Kashefi}}
+    @article{kashefi2025physics,
+      title={Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular 
+      geometries},
+      author={Kashefi, Ali and Mukerji, Tapan},
+      journal={arXiv preprint arXiv:2504.06327},
+      year={2025}}
 
 **Abstract** <be>
 
-Kolmogorov-Arnold Networks ...
+Kolmogorov-Arnold Networks (KANs) have gained attention as a promising alternative to traditional Multilayer Perceptrons (MLPs) for deep learning applications in computational physics, especially within the framework of physics-informed neural networks (PINNs). Physics-informed Kolmogorov-Arnold Networks (PIKANs) and their variants have been introduced and evaluated to solve inverse problems. However, similar to PINNs, current versions of PIKANs are limited to obtaining solutions for a single computational domain per training run; consequently, a new geometry requires retraining the model from scratch. Physics-informed PointNet (PIPN) was introduced to address this limitation for PINNs. In this work, we introduce physics-informed Kolmogorov-Arnold PointNet (PI-KAN-PointNet) to extend this capability to PIKANs. PI-KAN-PointNet enables the simultaneous solution of an inverse problem over multiple irregular geometries within a single training run, reducing computational costs. We construct KANs using Jacobi polynomials and investigate their performance by considering Jacobi polynomials of different degrees, as well as special cases such as Legendre polynomials, Chebyshev polynomials of the first and second kinds, and Gegenbauer polynomials, in terms of both computational cost and prediction accuracy. As a benchmark test case, we consider natural convection in a square enclosure with a cylinder, where the cylinder's shape varies across a dataset of 135 geometries. We compare the performance of PI-KAN-PointNet with that of PIPN (i.e., physics-informed PointNet with MLPs) and observe that, with approximately an equal number of trainable parameters and similar computational cost, PI-KAN-PointNet provides more accurate predictions. Finally, we explore the combination of KAN and MLP in constructing a physics-informed PointNet. Our findings indicate that a physics-informed PointNet model employing MLP layers as the encoder and KAN layers as the decoder represents the optimal configuration among all models investigated.
 
 **Installation** <be>
 This guide will help you set up the environment required to run the code. Follow the steps below to install the necessary dependencies.
