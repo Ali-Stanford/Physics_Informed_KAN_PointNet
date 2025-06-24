@@ -1,3 +1,13 @@
+# In The Name of God
+##### Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular geometries #####
+
+#Author: Ali Kashefi (kashefi@stanford.edu)
+
+##### Citation #####
+
+
+
+###### Libraries ######
 import os
 import csv
 import linecache
@@ -21,42 +31,35 @@ import torch.nn.init as init
 import time
 import gc
 from torchsummary import summary
-###############
 
+###### Device setup ######
 if torch.cuda.is_available():
     device = torch.device("cuda")  # GPU available
 else:
     device = torch.device("cpu")  # Only CPU available
 
-###############
-
 gc.collect()
 torch.cuda.empty_cache()
 
-###############
-
+###### Parameter setup ######
 problem_dimension = 2  # (x,y)
 variable_number = 4  # (u,v,p,T)
 N_boundary = 168+492 # number of points on the boundary
 outter_surface_n = 492 # number of points on the outer surface
 
-SCALE = 0.5
+SCALE = 0.5 # To control the network size
+poly_degree = 2 # Polynomial degree of Jacaboi Polynomial
+ALPHA = -0.5 # \alpha in Jacaboi Polynomial
+BETA = -0.5 # \beta in Jacaboi Polynomial
+
 Learning_rate = 0.0005
-Epoch = 2500 
+Epoch = 2500 # Maximum number of epochs
 Nb = 7 # Batch Size (memory sensitive)
 J_Loss = 0.0001
 
-###############
-
-density = 1.0
-viscosity = np.power(2.0,1.5)*np.power(10.0,-2.5)
-kappa =  np.power(2.0,1.5)*np.power(10.0,-2.5)
-
-###############
-
-poly_degree = 2
-ALPHA = -0.5
-BETA = -0.5
+density = 1.0 # fluid density
+viscosity = np.power(2.0,1.5)*np.power(10.0,-2.5) # fluid viscosity
+kappa =  np.power(2.0,1.5)*np.power(10.0,-2.5) # thermal conductivity
 
 ###############
 
