@@ -67,7 +67,7 @@ BC_list = [] #point number on boundary
 full_list = [] #point number on the whole domain 
 interior_list = [] #interior nodes without full, BC, sparse
 
-Data = np.load('Data.npy')
+Data = np.load('HeatTransferData.npy')
 data, num_points, _ = Data.shape
 
 X_train = Data[:, :, :problem_dimension]
@@ -231,7 +231,6 @@ class PointNetKAN(nn.Module):
         return x
 
 ###### Functions for data visualization and error calculations ######
-
 def plotSolutions2DPoint(x,y,variable,index,name,title):    
     marker_size= 1.0 
     plt.scatter(x, y, marker_size, variable, cmap='jet')
@@ -260,7 +259,6 @@ def plotCost(Y,name,title):
     #plt.show()
 
 def relative_l2_norm(prediction, truth):
-    
     l2_norm_diff = np.linalg.norm(prediction - truth)
     l2_norm_v1 = np.linalg.norm(truth)
        
@@ -268,7 +266,6 @@ def relative_l2_norm(prediction, truth):
 
 ###### Helper functions for sensor setup ######
 def find_on_boundary(x_i,y_i,data_number,find_value):
-    
     call = -1
     for index in range(0,N_boundary):  
         if np.sqrt(np.power(X_train[data_number][index][0]-x_i,2.0) + np.power(X_train[data_number][index][1]-y_i,2.0)) < np.power(10.0,-11.0): #np.power(10.0,-4.0):
@@ -283,7 +280,6 @@ def find_on_interior(x_i,y_i,data_number,find_value):
             call = index
             break
     return call
-
 
 def problemSet_nonuniform_grid():
     Lambda_pde = 1.0
@@ -356,34 +352,34 @@ def problemSet_nonuniform_grid():
         boundary_nodes = boundary_nodes[np.argsort(boundary_nodes[:, 1])]
         for j in range(13):
             x_sparse[conuter_s] = -1 + (j+2)*step_x 
-            y_sparse[conuter_s] = loc[i][0] #4.0
+            y_sparse[conuter_s] = loc[i][0] 
             conuter_s += 1
         for j in range(5):
             x_sparse[conuter_s] = -1 + 0.5 + (j+2)*step_x 
-            y_sparse[conuter_s] = loc[i][1] #4.5
+            y_sparse[conuter_s] = loc[i][1] 
             conuter_s += 1
         for j in range(13):
             x_sparse[conuter_s] = -1 + (j+2)*step_x 
-            y_sparse[conuter_s] = loc[i][2] #8.2
+            y_sparse[conuter_s] = loc[i][2] 
             conuter_s += 1
         for j in range(13):
             x_sparse[conuter_s] = -1 + (j+2)*step_x 
-            y_sparse[conuter_s] = loc[i][3] #9.0
+            y_sparse[conuter_s] = loc[i][3] 
             conuter_s += 1
         for j in range(12):
-            x_sparse[conuter_s] = loc[i][4] #3.6 
+            x_sparse[conuter_s] = loc[i][4] 
             y_sparse[conuter_s] = -1 + (j+1)*step_y*1.2
             conuter_s += 1
         for j in range(6):
-            x_sparse[conuter_s] = loc[i][5] #4.2 
+            x_sparse[conuter_s] = loc[i][5] 
             y_sparse[conuter_s] = -1 + (j+2)*step_y*1.7
             conuter_s += 1
         for j in range(6):
-            x_sparse[conuter_s] = loc[i][6] #8.2 
+            x_sparse[conuter_s] = loc[i][6] 
             y_sparse[conuter_s] = -1 + (j+2)*step_y*1.7
             conuter_s += 1
         for j in range(12):
-            x_sparse[conuter_s] = loc[i][7] #9.0 
+            x_sparse[conuter_s] = loc[i][7] 
             y_sparse[conuter_s] = -1 + (j+1)*step_y*1.2
             conuter_s += 1
         
@@ -436,7 +432,6 @@ def problemSet_nonuniform_grid():
             sparse_list[i][j] = find_on_boundary(xd_sparse[corban],yd_sparse[corban],i,find_value_store[i])
             corban += 1
             
-        #### Plotting ####
         x_outter_surface = np.zeros((outter_surface_n),dtype=float)
         y_outter_surface = np.zeros((outter_surface_n),dtype=float)
         x_boundary0 = np.zeros((N_boundary),dtype=float)
@@ -449,21 +444,11 @@ def problemSet_nonuniform_grid():
             x_outter_surface[j] = X_train[i][BC_list_temperature_inverse[0][j]][0] 
             y_outter_surface[j] = X_train[i][BC_list_temperature_inverse[0][j]][1] 
         
-        plt.scatter(x_boundary0,y_boundary0,s=0.5)
-        plt.scatter(x_outter_surface,y_outter_surface,s=0.5)
         xx_sparse = np.zeros((sparse_n),dtype=float)
         yy_sparse = np.zeros((sparse_n),dtype=float)
         for j in range(sparse_n):
             xx_sparse[j] = X_train[i][sparse_list[i][j]][0]
             yy_sparse[j] = X_train[i][sparse_list[i][j]][1]
-        #plt.scatter(x_sparse,y_sparse,s=5,marker="v") #artifical locations
-        plt.scatter(xx_sparse,yy_sparse,s=5,marker="v") #exact locations
-        plt.xlabel('x (m)')
-        plt.ylabel('y (m)')
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.savefig('sparsity'+str(i)+'.png',dpi=300)
-        #plt.savefig('sparsity.eps')    
-        plt.clf()
     
     for i in range(data):
         for j in range(len(x_sparse)):
@@ -476,12 +461,10 @@ def problemSet_nonuniform_grid():
             continue
         interior_list.append(i)
 
-##################################
-
+##### Functions for temperature #####
 def computeRelativeL2OnSurface(X,Tp,index):
 
     T_truth = 1.0
-    
     Nu_con = 0
     for i in range(N_boundary):
         if np.sqrt(np.square(0.0*np.pi-X_train[index][i][0]) + np.square(0.0*np.pi-X_train[index][i][1])) > (0.8):
@@ -506,7 +489,7 @@ def computeRelativeL2OnSurface(X,Tp,index):
         sum1 += np.square(Nu_surface[i][2]-T_truth)
         
     return np.sqrt(sum1/(N_boundary-outter_surface_n))
-
+    
 def compute_T_surface(X,Tp,index):
     
     Nu_con = 0
@@ -621,7 +604,7 @@ def TheLossEfficient(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperatu
     Sparse_cost = torch.mean((u_sparse - sparse_u_truth)**2 + (v_sparse - sparse_v_truth)**2 + (p_sparse - sparse_p_truth)**2 + (T_sparse - sparse_T_truth)**2)
 
     return PDE_cost + Sparse_cost + BC_cost
-    #return 100.0*PDE_cost + 100.0*Sparse_cost + BC_cost
+    #return 100.0*PDE_cost + 100.0*Sparse_cost + BC_cost ### one may use the weights for each components in the loss functions, deponding on the problem physics
 
 ###### Model Setup ######
 model = PointNetKAN(input_channels=problem_dimension, output_channels=variable_number, scaling=SCALE, Alpha=ALPHA, Beta=BETA)
