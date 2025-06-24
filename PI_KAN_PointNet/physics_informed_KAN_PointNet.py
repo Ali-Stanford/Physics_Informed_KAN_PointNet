@@ -536,8 +536,7 @@ def compute_T_surface(X,Tp,index):
         information.write('\n')
     information.close()
 
-##################################
-
+###### Problem Set Up ######
 problemSet_nonuniform_grid()
 
 ###### Physics informed loss function ######
@@ -624,11 +623,11 @@ def TheLossEfficient(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperatu
     return PDE_cost + Sparse_cost + BC_cost
     #return 100.0*PDE_cost + 100.0*Sparse_cost + BC_cost
 
-#################################
+###### Model Setup ######
 model = PointNetKAN(input_channels=problem_dimension, output_channels=variable_number, scaling=SCALE, Alpha=ALPHA, Beta=BETA)
 model = model.to(device)
 
-
+###### Training and Error Analysis ######
 def build_model_Thermal():
 
     information = open("Loss.txt", "w")
@@ -922,6 +921,5 @@ def build_model_Thermal():
     for index in range(data):   
         compute_T_surface(X_train,prediction[index,3,:],index) 
 
-#########################################################
-
+###### Function call ######
 build_model_Thermal()
