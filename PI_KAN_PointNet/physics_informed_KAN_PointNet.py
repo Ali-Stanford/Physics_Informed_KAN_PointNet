@@ -61,16 +61,13 @@ density = 1.0 # fluid density
 viscosity = np.power(2.0,1.5)*np.power(10.0,-2.5) # fluid viscosity
 kappa =  np.power(2.0,1.5)*np.power(10.0,-2.5) # thermal conductivity
 
-###############
+###### Data loading and data preparation ######
 
 BC_list = [] #point number on boundary
 full_list = [] #point number on the whole domain 
 interior_list = [] #interior nodes without full, BC, sparse
 
-###############
-
-Data = np.load('/scratch/users/kashefi/Model10/ZYkanpipn1/Data.npy')
-
+Data = np.load('Data.npy')
 data, num_points, _ = Data.shape
 
 X_train = Data[:, :, :problem_dimension]
@@ -81,14 +78,13 @@ cfd_v = CFD_train[:, :, 1].reshape(-1)
 cfd_p = CFD_train[:, :, 2].reshape(-1)
 cfd_T = CFD_train[:, :, 3].reshape(-1)
 
-############### sensor location ###############
-
+###### Sensor locations and setup ######
 sparse_d = 25
 sparse_n = 100+5+sparse_d
 sparse_list = [[-1 for i in range(sparse_n)] for j in range(data)] 
 BC_list_temperature_inverse = [[-1 for i in range(outter_surface_n)] for j in range(data)] 
 
-######################################
+###### Shared Kolmogorov-Arnold Networks (KANs) ######
 class JacobiKANLayerFirst(nn.Module):
     def __init__(self, input_dim, output_dim, degree, a=1.0, b=1.0):
         super(JacobiKANLayerFirst, self).__init__()
@@ -124,8 +120,7 @@ class JacobiKANLayerFirst(nn.Module):
 
         return y
 
-######################################
-
+###### Shared Kolmogorov-Arnold Networks (KANs) ######
 class JacobiKANLayer(nn.Module):
     def __init__(self, input_dim, output_dim, degree, a=1.0, b=1.0):
         super(JacobiKANLayer, self).__init__()
@@ -161,8 +156,7 @@ class JacobiKANLayer(nn.Module):
 
         return y
 
-############################ Define PointNet with KAN ##############################
-
+###### PointNet with shared KANs ######
 class PointNetKAN(nn.Module):
     def __init__(self, input_channels, output_channels, scaling=1.0, Alpha=1.0, Beta=1.0):
         super(PointNetKAN, self).__init__()
@@ -236,7 +230,7 @@ class PointNetKAN(nn.Module):
 
         return x
 
-###################################################
+###### Functions for data visualization and error calculations ######
 
 def plotSolutions2DPoint(x,y,variable,index,name,title):    
     marker_size= 1.0 
@@ -254,8 +248,6 @@ def plotSolutions2DPoint(x,y,variable,index,name,title):
     plt.clf()
     #plt.show()
 
-####################################################
-
 def plotCost(Y,name,title):
     plt.plot(Y)
     plt.yscale('log')
@@ -267,8 +259,6 @@ def plotCost(Y,name,title):
     plt.clf()
     #plt.show()
 
-####################################################
-
 def relative_l2_norm(prediction, truth):
     
     l2_norm_diff = np.linalg.norm(prediction - truth)
@@ -276,8 +266,7 @@ def relative_l2_norm(prediction, truth):
        
     return l2_norm_diff / l2_norm_v1
 
-####################################################
-
+###### Helper functions for sensor setup ######
 def find_on_boundary(x_i,y_i,data_number,find_value):
     
     call = -1
@@ -295,8 +284,7 @@ def find_on_interior(x_i,y_i,data_number,find_value):
             break
     return call
 
-###### Physics Informed Poisson Equation with Batch Size ######
- 
+
 def problemSet_nonuniform_grid():
     Lambda_pde = 1.0
     Lambda_bc = 1.0
@@ -336,14 +324,14 @@ def problemSet_nonuniform_grid():
         
     loc = np.zeros((data,8),dtype=float)
     for i in range(data):
-        loc[i][0] = -0.75 #4.0
-        loc[i][1] = -0.6 #4.5
-        loc[i][2] = 0.6 #8.2
-        loc[i][3] = 0.83 #9.0
-        loc[i][4] = -0.85 #3.6
-        loc[i][5] = -0.6 #4.2
-        loc[i][6] = 0.6 #8.2
-        loc[i][7] = 0.85 #9.0
+        loc[i][0] = -0.75 
+        loc[i][1] = -0.6 
+        loc[i][2] = 0.6 
+        loc[i][3] = 0.83 
+        loc[i][4] = -0.85 
+        loc[i][5] = -0.6 
+        loc[i][6] = 0.6 
+        loc[i][7] = 0.85 
         
     x_c = 0.0 
     y_c = 0.0 
@@ -448,7 +436,7 @@ def problemSet_nonuniform_grid():
             sparse_list[i][j] = find_on_boundary(xd_sparse[corban],yd_sparse[corban],i,find_value_store[i])
             corban += 1
             
-            
+        #### Plotting ####
         x_outter_surface = np.zeros((outter_surface_n),dtype=float)
         y_outter_surface = np.zeros((outter_surface_n),dtype=float)
         x_boundary0 = np.zeros((N_boundary),dtype=float)
@@ -519,8 +507,6 @@ def computeRelativeL2OnSurface(X,Tp,index):
         
     return np.sqrt(sum1/(N_boundary-outter_surface_n))
 
-##################################
-
 def compute_T_surface(X,Tp,index):
     
     Nu_con = 0
@@ -554,8 +540,7 @@ def compute_T_surface(X,Tp,index):
 
 problemSet_nonuniform_grid()
 
-##################################
-
+###### Physics informed loss function ######
 def TheLossEfficient(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperature_p,pose_BC_p,pose_sparse_p,pose_interior_p):
 
     Y = model(X)
@@ -635,8 +620,9 @@ def TheLossEfficient(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperatu
     PDE_cost = torch.mean(r1**2 + r2**2 + r3**2 + r4**2)
     BC_cost = torch.mean((u_boundary - 0.0)**2 + (v_boundary - 0.0)**2) + torch.mean((T_boundary - 0.0)**2)
     Sparse_cost = torch.mean((u_sparse - sparse_u_truth)**2 + (v_sparse - sparse_v_truth)**2 + (p_sparse - sparse_p_truth)**2 + (T_sparse - sparse_T_truth)**2)
-    
-    return 100.0*PDE_cost + 100.0*Sparse_cost + BC_cost
+
+    return PDE_cost + Sparse_cost + BC_cost
+    #return 100.0*PDE_cost + 100.0*Sparse_cost + BC_cost
 
 #################################
 model = PointNetKAN(input_channels=problem_dimension, output_channels=variable_number, scaling=SCALE, Alpha=ALPHA, Beta=BETA)
