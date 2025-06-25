@@ -109,10 +109,8 @@ class PointNet(nn.Module):
         
         # Shared MLP (128, output_channels)
         self.conv9 = nn.Conv1d(int(128 * scaling), int(128 * scaling), 1)
-        #self.bn9 = nn.BatchNorm1d(int(128 * scaling))
         self.conv10 = nn.Conv1d(int(128 * scaling), output_channels, 1)
 
-    
     def forward(self, x):
 
         # Shared MLP (64, 64)
