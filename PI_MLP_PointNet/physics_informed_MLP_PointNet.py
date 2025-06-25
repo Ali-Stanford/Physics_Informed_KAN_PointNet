@@ -55,11 +55,7 @@ variable_number = 4  # (u,v,p,T)
 N_boundary = 168+492 # number of points on the boundary
 outter_surface_n = 492 # number of points on the outer surface
 
-SCALE = 0.5 # To control the network size
-poly_degree = 2 # Polynomial degree of Jacaboi Polynomial
-ALPHA = -0.5 # \alpha in Jacaboi Polynomial
-BETA = -0.5 # \beta in Jacaboi Polynomial
-
+SCALE = 1.0 # To control the network size
 Learning_rate = 0.0005
 Epoch = 2500 # Maximum number of epochs
 Nb = 7 # Batch Size (memory sensitive)
@@ -92,149 +88,60 @@ sparse_n = 100+5+sparse_d
 sparse_list = [[-1 for i in range(sparse_n)] for j in range(data)] 
 BC_list_temperature_inverse = [[-1 for i in range(outter_surface_n)] for j in range(data)] 
 
-###### Shared Kolmogorov-Arnold Networks (KANs) ######
-class JacobiKANLayerFirst(nn.Module):
-    def __init__(self, input_dim, output_dim, degree, a=1.0, b=1.0):
-        super(JacobiKANLayerFirst, self).__init__()
-        self.input_dim = input_dim
-        self.output_dim = output_dim
-        self.a = a
-        self.b = b
-        self.degree = degree
+###### PointNet with MLPs ######
+class PointNet(nn.Module):
+    def __init__(self, input_channels, output_channels, scaling=1.0):
+        super(PointNet, self).__init__()
 
-        self.jacobi_coeffs = nn.Parameter(torch.empty(input_dim, output_dim, degree + 1))
-        nn.init.normal_(self.jacobi_coeffs, mean=0.0, std=1 / (input_dim * (degree + 1)))
+        # Shared MLP (64, 64)
+        self.conv1 = nn.Conv1d(input_channels, int(64 * scaling), 1)
+        self.conv2 = nn.Conv1d(int(64 * scaling), int(64 * scaling), 1)
+        
+        # Shared MLP (64, 128, 1024)
+        self.conv3 = nn.Conv1d(int(64 * scaling), int(64 * scaling), 1)
+        self.conv4 = nn.Conv1d(int(64 * scaling), int(128 * scaling), 1)
+        self.conv5 = nn.Conv1d(int(128 * scaling), int(1024 * scaling), 1)
+        
+        # Shared MLP (512, 256, 128)
+        self.conv6 = nn.Conv1d(int(1024 * scaling) + int(64 * scaling), int(512 * scaling), 1)
+        self.conv7 = nn.Conv1d(int(512 * scaling), int(256 * scaling), 1)
+        self.conv8 = nn.Conv1d(int(256 * scaling), int(128 * scaling), 1)
+        
+        # Shared MLP (128, output_channels)
+        self.conv9 = nn.Conv1d(int(128 * scaling), int(128 * scaling), 1)
+        #self.bn9 = nn.BatchNorm1d(int(128 * scaling))
+        self.conv10 = nn.Conv1d(int(128 * scaling), output_channels, 1)
 
-    def forward(self, x):
-        batch_size, input_dim, num_points = x.shape
-        x = x.permute(0, 2, 1).contiguous()  # shape = (batch_size, num_points, input_dim)
-        # x = torch.tanh(x)  # if the input data is already between [-1, 1], no need to normalize x to [-1, 1]
-
-        # Initialize Jacobi polynomial tensors
-        jacobi = torch.ones(batch_size, num_points, self.input_dim, self.degree + 1, device=x.device)
-
-        if self.degree > 0:
-            jacobi[:, :, :, 1] = ((self.a - self.b) + (self.a + self.b + 2) * x) / 2
-
-        for i in range(2, self.degree + 1):
-            A = (2*i + self.a + self.b - 1)*(2*i + self.a + self.b)/((2*i) * (i + self.a + self.b))
-            B = (2*i + self.a + self.b - 1)*(self.a**2 - self.b**2)/((2*i)*(i + self.a + self.b)*(2*i+self.a+self.b-2))
-            C = -2*(i + self.a -1)*(i + self.b -1)*(2*i + self.a + self.b)/((2*i)*(i + self.a + self.b)*(2*i + self.a + self.b -2))
-            jacobi[:, :, :, i] = (A*x + B)*jacobi[:, :, :, i-1].clone() + C*jacobi[:, :, :, i-2].clone()
-
-        # Compute the Jacobi interpolation
-        jacobi = jacobi.permute(0, 2, 3, 1)  # shape = (batch_size, input_dim, degree + 1, num_points)
-        y = torch.einsum('bids,iod->bos', jacobi, self.jacobi_coeffs)  # shape = (batch_size, output_dim, num_points)
-
-        return y
-
-###### Shared Kolmogorov-Arnold Networks (KANs) ######
-class JacobiKANLayer(nn.Module):
-    def __init__(self, input_dim, output_dim, degree, a=1.0, b=1.0):
-        super(JacobiKANLayer, self).__init__()
-        self.input_dim = input_dim
-        self.output_dim = output_dim
-        self.a = a
-        self.b = b
-        self.degree = degree
-
-        self.jacobi_coeffs = nn.Parameter(torch.empty(input_dim, output_dim, degree + 1))
-        nn.init.normal_(self.jacobi_coeffs, mean=0.0, std=1 / (input_dim * (degree + 1)))
-
-    def forward(self, x):
-        batch_size, input_dim, num_points = x.shape
-        x = x.permute(0, 2, 1).contiguous()  # shape = (batch_size, num_points, input_dim)
-        x = torch.tanh(x)  # Normalize x to [-1, 1]
-
-        # Initialize Jacobi polynomial tensors
-        jacobi = torch.ones(batch_size, num_points, self.input_dim, self.degree + 1, device=x.device)
-
-        if self.degree > 0:
-            jacobi[:, :, :, 1] = ((self.a - self.b) + (self.a + self.b + 2) * x) / 2
-
-        for i in range(2, self.degree + 1):
-            A = (2*i + self.a + self.b - 1)*(2*i + self.a + self.b)/((2*i) * (i + self.a + self.b))
-            B = (2*i + self.a + self.b - 1)*(self.a**2 - self.b**2)/((2*i)*(i + self.a + self.b)*(2*i+self.a+self.b-2))
-            C = -2*(i + self.a -1)*(i + self.b -1)*(2*i + self.a + self.b)/((2*i)*(i + self.a + self.b)*(2*i + self.a + self.b -2))
-            jacobi[:, :, :, i] = (A*x + B)*jacobi[:, :, :, i-1].clone() + C*jacobi[:, :, :, i-2].clone()
-
-        # Compute the Jacobi interpolation
-        jacobi = jacobi.permute(0, 2, 3, 1)  # shape = (batch_size, input_dim, degree + 1, num_points)
-        y = torch.einsum('bids,iod->bos', jacobi, self.jacobi_coeffs)  # shape = (batch_size, output_dim, num_points)
-
-        return y
-
-###### PointNet with shared KANs ######
-class PointNetKAN(nn.Module):
-    def __init__(self, input_channels, output_channels, scaling=1.0, Alpha=1.0, Beta=1.0):
-        super(PointNetKAN, self).__init__()
-
-        #Shared KAN (64, 64)
-        self.jacobikan1 = JacobiKANLayerFirst(input_channels, int(64 * scaling), poly_degree, Alpha, Beta)
-        self.jacobikan2 = JacobiKANLayer(int(64 * scaling), int(64 * scaling), poly_degree, Alpha, Beta)
-
-        #Shared KAN (64, 128, 1024)
-        self.jacobikan3 = JacobiKANLayer(int(64 * scaling), int(64 * scaling), poly_degree, Alpha, Beta)
-        self.jacobikan4 = JacobiKANLayer(int(64 * scaling), int(128 * scaling), poly_degree, Alpha, Beta)
-        self.jacobikan5 = JacobiKANLayer(int(128 * scaling), int(1024 * scaling), poly_degree, Alpha, Beta)
-
-        #Shared KAN (512, 256, 128)
-        self.jacobikan6 = JacobiKANLayer(int(1024 * scaling) + int(64 * scaling), int(512 * scaling), poly_degree, Alpha, Beta)
-        self.jacobikan7 = JacobiKANLayer(int(512 * scaling), int(256 * scaling), poly_degree, Alpha, Beta)
-        self.jacobikan8 = JacobiKANLayer(int(256 * scaling), int(128 * scaling), poly_degree, Alpha, Beta)
-
-        #Shared KAN (128, output_channels)
-        self.jacobikan9 = JacobiKANLayer(int(128 * scaling), int(128 * scaling), poly_degree, Alpha, Beta)
-        self.jacobikan10 = JacobiKANLayer(int(128 * scaling), output_channels, poly_degree, Alpha, Beta)
-
-        #Batch Normalization
-        self.bn1 = nn.BatchNorm1d(int(64 * scaling))
-        self.bn2 = nn.BatchNorm1d(int(64 * scaling))
-        self.bn3 = nn.BatchNorm1d(int(64 * scaling))
-        self.bn4 = nn.BatchNorm1d(int(128 * scaling))
-        self.bn5 = nn.BatchNorm1d(int(1024 * scaling))
-        self.bn6 = nn.BatchNorm1d(int(512 * scaling))
-        self.bn7 = nn.BatchNorm1d(int(256 * scaling))
-        self.bn8 = nn.BatchNorm1d(int(128 * scaling))
-        self.bn9 = nn.BatchNorm1d(int(128 * scaling))
-
+    
     def forward(self, x):
 
-        # Shared KAN (64, 64)
-        x = self.jacobikan1(x)
-        x = self.bn1(x)
-        x = self.jacobikan2(x)
-        x = self.bn2(x)
+        # Shared MLP (64, 64)
+        x = F.tanh(self.conv1(x))
+        x = F.tanh(self.conv2(x))
 
         local_feature = x
 
-        # Shared KAN (64, 128, 1024)
-        x = self.jacobikan3(x)
-        x = self.bn3(x)
-        x = self.jacobikan4(x)
-        x = self.bn4(x)
-        x = self.jacobikan5(x)
-        x = self.bn5(x)
+        # Shared MLP (64, 128, 1024)
+        x = F.tanh(self.conv3(x))
+        x = F.tanh(self.conv4(x))
+        x = F.tanh(self.conv5(x))
+
 
         # Max pooling to get the global feature
         global_feature = F.max_pool1d(x, kernel_size=x.size(-1))
-        global_feature = global_feature.view(-1, global_feature.size(1), 1).expand(-1, -1, num_points)
+        global_feature = global_feature.expand(-1, -1, num_points)
 
         # Concatenate local and global features
         x = torch.cat([local_feature, global_feature], dim=1)
 
-        # Shared KAN (512, 256, 128)
-        x = self.jacobikan6(x)
-        x = self.bn6(x)
-        x = self.jacobikan7(x)
-        x = self.bn7(x)
-        x = self.jacobikan8(x)
-        x = self.bn8(x)
+        # Shared MLP (512, 256, 128)
+        x = F.tanh(self.conv6(x))
+        x = F.tanh(self.conv7(x))
+        x = F.tanh(self.conv8(x))
 
-        # Shared KAN (128, output_channels)
-        x = self.jacobikan9(x)
-        x = self.bn9(x)
-        x = self.jacobikan10(x)
+        # MLP (128, output_channels)
+        x = F.tanh(self.conv9(x))
+        x = F.tanh(self.conv10(x))
 
         return x
 
@@ -612,10 +519,9 @@ def TheLossEfficient(model,X,pose_BC,pose_sparse,pose_interior,pose_BC_temperatu
     Sparse_cost = torch.mean((u_sparse - sparse_u_truth)**2 + (v_sparse - sparse_v_truth)**2 + (p_sparse - sparse_p_truth)**2 + (T_sparse - sparse_T_truth)**2)
 
     return PDE_cost + Sparse_cost + BC_cost
-    #return 100.0*PDE_cost + 100.0*Sparse_cost + BC_cost ### one may use the weights for each components in the loss functions, deponding on the problem physics
 
 ###### Model Setup ######
-model = PointNetKAN(input_channels=problem_dimension, output_channels=variable_number, scaling=SCALE, Alpha=ALPHA, Beta=BETA)
+model = PointNet(input_channels=problem_dimension, output_channels=variable_number, scaling=SCALE)
 model = model.to(device)
 
 ###### Training and Error Analysis ######
