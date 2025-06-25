@@ -4,16 +4,30 @@
 # Author: Ali Kashefi (kashefi@stanford.edu)
 
 ##### Citation #####
-# If you use the code, please cite the following article:
-# "Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular geometries"
-# arXiv link: https://arxiv.org/abs/2504.06327
+# If you use the code, please cite the following articles:
+# 1
+# Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular geometries
+# link: https://arxiv.org/abs/2504.06327
 
-#@article{kashefi2025PhysicsInformedKANpointnet,
-#title={Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular 
-#geometries},
-#author={Kashefi, Ali and Mukerji, Tapan},
-#journal={arXiv preprint arXiv:2504.06327},
-#year={2025}}
+# @article{kashefi2025PhysicsInformedKANpointnet,
+# title={Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular 
+# geometries},
+# author={Kashefi, Ali and Mukerji, Tapan},
+# journal={arXiv preprint arXiv:2504.06327},
+# year={2025}}
+
+# 2
+# Physics-informed PointNet: A deep learning solver for steady-state incompressible flows and thermal fields on multiple sets of irregular geometries
+# https://doi.org/10.1016/j.jcp.2022.111510
+
+# @article{Kashefi2022PIPN, 
+# title = {Physics-informed PointNet: A deep learning solver for steady-state incompressible flows and thermal fields on multiple sets of irregular geometries},
+# journal = {Journal of Computational Physics}, 
+# volume = {468}, 
+# pages = {111510}, 
+# year = {2022}, 
+# issn = {0021-9991},
+# author = {Ali Kashefi and Tapan Mukerji}}
 
 ###### Libraries ######
 import os
