@@ -11,14 +11,15 @@
 **Citation** <br>
 If you use the code, please cite the following article: <br>
 
-**[Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular geometries](https://arxiv.org/abs/2504.06327)**
+**[Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular geometries](https://doi.org/10.1002/fld.70085)**
 
     @article{kashefi2025PhysicsInformedKANpointnet,
-      title={Physics-informed KAN PointNet: Deep learning for simultaneous solutions to inverse problems in incompressible flow on numerous irregular 
-      geometries},
-      author={Kashefi, Ali and Mukerji, Tapan},
-      journal={arXiv preprint arXiv:2504.06327},
-      year={2025}}
+        author = {Kashefi, Ali and Mukerji, Tapan},
+        title = {Physics-Informed KAN PointNet: Deep Learning for Simultaneous Solutions to Inverse Problems in Incompressible Flow on Numerous Irregular           Geometries},
+        journal = {International Journal for Numerical Methods in Fluids},
+        year={2026},
+        doi = {https://doi.org/10.1002/fld.70085}}
+
 
 **Abstract** <be>
 
